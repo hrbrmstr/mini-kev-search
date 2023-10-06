@@ -17,7 +17,9 @@ $ scp dist/* you@some.example.com:~/some/web/root/
 
 for a slightly fancier version.
 
-Ref: <>
+Ref: <https://dailyfinds.hrbrmstr.dev/p/drop-348-2023-10-06-weekend-project>
+
+Ref: <https://companion.hrbrmstr.dev/posts/2023-10-06-minisearch/>
 
 Bare bones:
 ![bare-bones](rud_is_wpe_2023-10-06-wpe-01_html.png)
