@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+
+<body style="width:80vw; margin-left:auto; margin-right:auto; margin-top: 1em; font-family: sans-serif">
+  <kev-search />
+  <script type="module">
+    import MiniSearch from 'https://cdn.jsdelivr.net/npm/minisearch@6.1.0/+esm'
+    import { LitElement, css, html } from 'https://cdn.jsdelivr.net/npm/lit@2.8.0/+esm'
+
+    const kev = await (await fetch("https://rud.is/data/kev.json")).json()
+    const vulns = kev.vulnerabilities.map(d => {
+      d.id = d.cveID
+      return (d)
+    })
+
+    const kevByCVE = vulns.reduce((byCVE, entry) => {
+      byCVE[ entry.id ] = entry
+      return byCVE
+    }, {})
+
+    const kevSearch = new MiniSearch({
+      fields: [ 'cveID', 'product', 'shortDescription', 'vendorProject', 'vulnerabilityName' ],
+      storeFields: [ 'cveID', 'shortDescription', 'dateAdded' ]
+    })
+
+    kevSearch.addAll(vulns)
+
+    const searchOptions = {
+      fuzzy: 0.1,
+      prefix: true,
+      fields: [ 'cveID', 'product', 'shortDescription', 'vendorProject', 'vulnerabilityName' ],
+      combineWith: 'OR',
+      filter: null
+    }
+
+    export class KEVSearch extends LitElement {
+      static get properties() {
+        return {
+          searchText: { type: String },
+          results: { type: Array }
+        }
+      }
+
+      firstUpdated() {
+        this.shadowRoot.querySelector('#kev').focus();
+      }
+
+      constructor() {
+        super()
+        this.searchText = ""
+        this.results = []
+      }
+
+      render() {
+        return html`
+<div>
+KEV Search: <input placeholder="enter search terms…" 
+        type="text" 
+        name="kev-input" 
+        .value=${this.searchText}
+        @input=${this._getSearchResults}
+        id="kev"/>
+</div>
+<div>
+${this.results.map(r => html`
+<entry>
+  <cve>
+    <a href="https://nvd.nist.gov/vuln/detail/${r.cveID}" target="nvd">${r.cveID}</a>
+  </cve>
+  <vuln>${r.vulnerabilityName}</vuln>
+  <descr>${r.shortDescription}</descr>
+</entry>
+`)}
+</div>
+</div>
+</div>
+`
+      }
+
+      _getSearchResults(e) {
+        e.preventDefault();
+        this.inputValue = e.target.value;
+        this.results = kevSearch.search(e.target.value, searchOptions).map(({ id }) => kevByCVE[ id ])
+      }
+
+      static get styles() {
+        return css`
+entry, cve, vuln, descr {
+  display: block
+}
+entry {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+    `
+      }
+    }
+
+    window.customElements.define('kev-search', KEVSearch)
+  </script>
+</body>
+
+</html>
